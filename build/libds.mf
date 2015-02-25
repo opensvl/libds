@@ -18,8 +18,9 @@ include config.mk
 TARGET = libds
 
 DS_PLAT ?= unix
+DS_CFLAGS +=  -I../src
 DS_CFLAGS +=  -I../src/include
-DS_CFLAGS += -I../src/include/$(DS_PLAT)
+DS_CFLAGS += -I../src/include/platform/$(DS_PLAT)
 
 
 ifeq ($(DS_PLAT), unix)
@@ -71,8 +72,8 @@ DS_CFLAGS += -D_USE_LCF_LOG_
 endif
 
 #####################################################
-DS_OBJS = ds_log.o ds_utils.o ds_string.o ds_buffer.o ds_list.o ds_crypt.o ds_object.o
-DS_OBJS += $(DS_PLAT)/ds_plat_basic.o
+DS_OBJS = $(DS_PLAT)/ds_plat_basic.o
+DS_OBJS += ds_log.o ds_utils.o ds_string.o ds_buffer.o ds_list.o ds_crypt.o ds_object.o
 DS_OBJS += $(DS_PLAT)/ds_udp_stream.o
 DS_OBJS += $(DS_PLAT)/ds_tcp_stream.o
 DS_OBJS += ds_http_client.o
