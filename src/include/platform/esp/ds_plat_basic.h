@@ -1,6 +1,6 @@
 /*
  * libds
- * Copyright (c) Chunfeng Zhang(CrazyPandar@gmail.com), All rights reserved.
+ * Copyright (c) Chunfeng Zhang <CrazyPandar@gmail.com>, All rights reserved.
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,15 +16,23 @@
  * License along with this library.
  * 
  */
-#ifndef _DS_PLAT_H_
-#define _DS_PLAT_H_
+#ifndef _DS_PLAT_BASIC_H_
+#define _DS_PLAT_BASIC_H_
 
-typedef os_malloc DSMalloc
-typedef os_free DSFree
-typedef os_zalloc	DSZalloc
-typedef os_realloc	DSRealloc
+#include <ets_sys.h>
+#include <os_type.h>
+#include <mem.h>
+#include <osapi.h>
 
-typedef os_memcpy	DSMemcpy
-typedef os_memcmp	DSMemcmp
+#define fprintf(__FP, ...)	printf(__VA_ARGS__);
+
+#define DSMalloc os_malloc
+#define DSFree os_free
+#define DSZalloc os_zalloc
+void* DSRealloc(void *ptr, size_t size);
+#define DSMemcpy os_memcpy
+#define DSMemcmp os_memcmp
+
+#define DS_FUNC_ATTR
 
 #endif
