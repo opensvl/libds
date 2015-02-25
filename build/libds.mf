@@ -45,7 +45,7 @@ ESP_CROSS_COMPILE ?= ../../esp8266/toolchain/xtensa-lx106-elf/bin/xtensa-lx106-e
 
 ESP_SYS_DIR ?= ../../esp8266/sys_sdk
 ESP_SYS_INC_DIR ?= $(ESP_SYS_DIR)/include
-ESP_SYS_LIB_DIR ?= $(ESP_SYS_DIR)/lib
+ESP_SYS_LIB_DIR ?= $(ESP_SYS_DIR)/libs
 
 ESP_SDK_DIR ?= ../../esp8266/sdk/esp_iot_sdk
 ESP_SDK_INC_DIR ?= $(ESP_SDK_DIR)/include
@@ -121,9 +121,11 @@ $(DS_PLAT)/%.o: ../src/platform/$(DS_PLAT)/%.c
 
 $(TARGET).so.$(VER):$(DS_OBJS)
 	$(DS_CC) -shared $(DS_LDFLAGS) -o$@ $^
+	ln -sf $@ $(TARGET).so
 
 $(TARGET).a.$(VER):$(DS_OBJS)
 	$(DS_AR) $(DS_AR_FLAGS) $@ $^
+	ln -sf $@ $(TARGET).a
 
 install:
 	#
