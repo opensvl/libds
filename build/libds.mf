@@ -67,8 +67,8 @@ DS_CFLAGS += -s -O2
 DS_LDFLAGS += -s -O2
 endif
 
-ifeq ($(DS_USE_LCF_LOG), yes)
-DS_CFLAGS += -D_USE_LCF_LOG_
+ifeq ($(DS_USE_LDS_LOG), yes)
+DS_CFLAGS += -D_USE_LDS_LOG_
 endif
 
 #####################################################
