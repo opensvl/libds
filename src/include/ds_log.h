@@ -53,4 +53,8 @@ int DSLogToFile(enum DS_LOG_TYPE type, const char* file_path, const char* format
 #define DS_DBG(...) DSLogToFile(LOG_DEBUG, DEBUG_LOG_FILE, "[D][%s:%d]", __FILE__, __LINE__); DSLogToFile(LOG_DEBUG, DEBUG_LOG_FILE, __VA_ARGS__);
 #endif
 
+#define DS_DBG_N() DS_DBG("\n");
+#define DS_DBG_IN_FUNC() DS_DBG("==>%s()\n", __FUNCTION__);
+#define DS_DBG_OUT_FUNC() DS_DBG("%s()==>\n", __FUNCTION__);
+
 #endif
