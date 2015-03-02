@@ -407,13 +407,14 @@ int DSSimpleHttpClientRequest(DSStream* strm, struct DSMhbRequest* req, size_t m
         LDS_ERR_OUT(ERR_FREE_SHC, "DSMhbClientNew() failed");
     }
     
-    if (!(shc->respBuffer = DSBufferNew(32, 16))) {
+    if (!(shc->respBuffer = DSBufferNew(maxRespSize>>1, 16))) {
         LDS_ERR_OUT(ERR_DESTOY_MC, "DSBufferNew(32, 16) failed");
     }
     
     DSMhbClientRequest(shc->mCli, req, NULL, NULL);
     
     shc->cb = cb;
+    shc->maxRespSize = maxRespSize;
     shc->userData = userData;
     return 0;
     
