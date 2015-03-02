@@ -76,7 +76,7 @@ BOOL DSStreamFinderParseOne(DSStreamFinder* sf, char ch)
 	return FALSE;
 }
 
-BOOL DSStreamFinderParse(DSStreamFinder* sf, char* buf, int size, int* ndlEndPos)
+BOOL DSStreamFinderParse(DSStreamFinder* sf, const char* buf, int size, int* ndlEndPos)
 {
 	int i;
 	

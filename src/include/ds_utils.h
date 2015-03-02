@@ -19,6 +19,8 @@
 #ifndef _DS_UTILS_H_
 #define _DS_UTILS_H_
 
+#include "ds_plat_basic.h"
+
 #ifndef offsetof
 #ifdef __compiler_offsetof
 #define DSOffsetOf(TYPE, MEMBER) __compiler_offsetof(TYPE,MEMBER)
@@ -32,6 +34,18 @@
 #define DS_MIN(__a, __b) (((__a)<(__b))?(__a):(__b))
 #define DS_MAX(__a, __b) (((__a)>(__b))?(__a):(__b))
 #define DS_ALIGN(__x, __a)	(((__x + __a - 1) / __a) * __a)
+
+#define DS_CONST_STR_LEN(__str) (__str),sizeof(__str)-1
+
+struct DSConstBuf {
+    const uint8_t* buf;
+    size_t size;
+};
+
+struct DSBuf {
+    uint8_t* buf;
+    size_t size;
+};
 
 #define DSRewriteVFunc(pClass, obj, vFunc, func) ((pClass*)obj)->vFunc = func
 
@@ -48,7 +62,7 @@ int DSStreamFinderStartFind(DSStreamFinder* sf, const char* stuf, int stufSz);
 
 BOOL DSStreamFinderParseOne(DSStreamFinder* sf, char ch);
 
-BOOL DSStreamFinderParse(DSStreamFinder* sf, char* buf, int size, int* ndlEndPos);
+BOOL DSStreamFinderParse(DSStreamFinder* sf, const char* buf, int size, int* ndlEndPos);
 
 void DSStreamFinderRestartFind(DSStreamFinder* sf);
 

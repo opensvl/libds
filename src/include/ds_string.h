@@ -53,6 +53,4 @@ DSString* DSStringSafeCat(DSString* string, const char* source);
 
 #define DSStringGetSize(_string) ((_string)->aSize)
 
-#define DS_CONST_STR_LEN(__str) (__str),sizeof(__str)-1
-
 #endif
