@@ -20,6 +20,7 @@
 #define _DS_STREAM_H_
 
 #include "ds_plat_basic.h"
+#include "ds_utils.h"
 #include "ds_object.h"
 
 typedef struct _DSStream DSStream;
@@ -27,15 +28,11 @@ typedef struct _DSStream DSStream;
 typedef enum {
     DS_STREAM_CB_ERROR = -1,
     DS_STREAM_CB_CONNECTED = 0,
-    DS_STREAM_CB_RECVED,   /* data: DSStreamRecvedData */
+    DS_STREAM_CB_RECVED,   /* data: struct DSConstBuf* */
     DS_STREAM_CB_SENT,
     DS_STREAM_CB_DISCONNECTED,
 }DSStreamCbReason;
 
-typedef struct  {
-    const uint8_t* buf;
-    int size;
-}DSStreamRecvedData;
 
 typedef void(*DSStreamCb)(DSStream* strm, DSStreamCbReason reas, void* data, void* userData);
 

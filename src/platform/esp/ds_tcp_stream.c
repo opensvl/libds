@@ -58,7 +58,7 @@ static void EspConnRecvCb(void *arg, char *pdata, unsigned short len)
     DSTcpStream* ets;
 
     ets = (DSTcpStream*)ec->reverse;
-    DSStreamRecvedData rd = {
+    struct DSConstBuf rd = {
         .buf = pdata,
         .size = len
     };

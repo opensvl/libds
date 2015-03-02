@@ -29,12 +29,12 @@ typedef struct _DSMhbClient DSMhbClient;
 typedef enum {
     DS_MHB_CLIENT_CB_ERROR = -1,
     DS_MHB_CLIENT_CB_BODY_WRITABLE,
-    DS_MHB_CLIENT_CB_RESP_HEADER,
+    DS_MHB_CLIENT_CB_RESP_HEADER,   /* data: DSConstBuf* */
     DS_MHB_CLIENT_CB_RESP_BODY,
     DS_MHB_CLIENT_CB_RESP_END
 }DSMhbClientCbReason;
 
-typedef void(*DSMhbClientCb)(DSMhbClient* cli, DSMhbClientCbReason reas, void* data, void* userData);
+typedef void(*DSMhbClientCb)(DSMhbClient* cli, DSMhbClientCbReason reas, const void* data, void* userData);
 
 struct _DSMhbClient {
     DSObject obj;
@@ -74,19 +74,8 @@ void DSMhbClientStopRequest(DSMhbClient* cli);
 void DSMhbClientDestroy(DSMhbClient* cli);
 
 
+typedef void(*DSSimpleHttpClientCb)(const char* err, struct DSConstBuf* respBuf, void* userData);
 
-
-typedef struct _DSSimpleHttpClient DSSimpleHttpClient;
-
-typedef void(*DSSimpleHttpClientCb)(DSSimpleHttpClient* hcli, const char* err, void* userData);
-
-struct _DSSimpleHttpClient {
-    DSMhbClient* mcli;
-    void* userData;
-    uint8_t* respBuf;
-    int respBufSz;
-};
-
-int DSSimpleHttpClientRequest(DSStream* strm, struct DSMhbRequest req, uint8_t* respBuf, int respBufSz, DSSimpleHttpClientCb cb, void* userData);
+int DSSimpleHttpClientRequest(DSStream* strm, struct DSMhbRequest* req, size_t maxRespSize, DSSimpleHttpClientCb cb, void* userData);
 
 #endif

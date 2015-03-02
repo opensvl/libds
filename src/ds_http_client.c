@@ -17,6 +17,8 @@
  * 
  */
 #include "ds_plat_basic.h"
+#include "ds_utils.h"
+#include "ds_buffer.h"
 #include "ds_stream.h"
 #include "ds_http_client.h"
 #include "lds_log.h"
@@ -33,10 +35,11 @@ static void DSMhbClientCleanupBuf(DSMhbClient* cli)
 
 static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* userData)
 {
-    int processed, pos, parsed, start, filled;
+    int pos, parsed, sent;
+    const char *start;
     BOOL reqHasBody = FALSE;
     DSMhbClient *cli;
-    struct DSStreamRecvedData *rd;
+    struct DSConstBuf *rd;
     
     cli = userData;
     rd = data;
@@ -46,49 +49,62 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
             switch (cli->st) {
                 case DS_MHB_CLIENT_ST_READ_RESP_HEADER:
                     /* read response and parse with DSStreamFinder */
-#if 0   /* todo */
-                    processed = rd->size;
-                    if (processed > 0) {
+                    if (rd->size > 0) {
                         parsed = 0;
-                        start = 0;
-                        while (DSStreamFinderParse(&cli->sf, cli->buf+cli->filled, readed-parsed, &pos)) {    /* find \r\n */
-                            parsed += (pos+1)
-                            if (pos == 1 || (cli->buf[start-1]=='\n')) {   /* find \r\n\r\n  end */
-                                start = -1; /* flag for header end */
+                        start = rd->buf;
+                        while (DSStreamFinderParse(&cli->sf, start, rd->size-parsed, &pos)) {    /* find \r\n */
+                            parsed += (pos+1);
+                            
+                            if ((pos == 1 && (cli->filled == 0)) || pos == 0 && (cli->filled == 1)) {   /* find \r\n\r\n  end */
+                                start = NULL;
                                 break;
                             } else {
-                                cli->buf[cli->filled+parsed+pos-1] = '\0';
-                                cli->cb(cli, DS_MHB_CLIENT_CB_RESP_HEADER, cli->buf[start], cli->userData);
+                                struct DSConstBuf hdBuf;
+                                int sz;
+                                
+                                if (pos > 1) {
+                                    sz = pos - 1;
+                                } else {
+                                    sz = 0;
+                                }
+                                
+                                if (cli->filled) {
+                                    strncpy(cli->buf+cli->filled, start, sz);
+                                    hdBuf.size = cli->filled+pos-1;
+                                    hdBuf.buf = cli->buf;
+                                    cli->cb(cli, DS_MHB_CLIENT_CB_RESP_HEADER, &hdBuf, cli->userData);
+                                    cli->filled = 0;
+                                } else {
+                                    hdBuf.size = sz;
+                                    hdBuf.buf = start;
+                                    cli->cb(cli, DS_MHB_CLIENT_CB_RESP_HEADER, &hdBuf, cli->userData);
+                                }
                             }
-                            start = cli->filled+parsed;
+                            
+                            start = &rd->buf[parsed];
                         }
                         
-                        if (processed > parsed) {
-                            memcpy(cli->buf, cli->buf+cli->filled+parsed, readed-parsed);
-                            cli->filled = readed-parsed;
-                            if (start == -1) {
-                                DSStreamFinderDestroy(&cli->sf);
-                                cli->st = DS_MHB_CLIENT_ST_READ_RESP_BODY;
-                                cli->cb(cli, DS_MHB_CLIENT_CB_RESP_BODY, cli->buf, cli->userData);
-                            }
+                        if (rd->size > parsed) {
+                            memcpy(cli->buf, rd->buf+parsed, (cli->filled = rd->size-parsed));
                         }
-                    } else if (processed ==0) {    /* header buffer is full */
-                        if (cli->bufSz == cli->filled) {
-                            cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Recieved header so large", cli->userData);
-                        } else {
-                            cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Server closed connection unexpectedly", cli->userData);
+                        if (start == NULL) {
+                            DSStreamFinderDestroy(&cli->sf);
+                            cli->st = DS_MHB_CLIENT_ST_READ_RESP_BODY;
+                            cli->cb(cli, DS_MHB_CLIENT_CB_RESP_BODY, cli->buf, cli->userData);
                         }
+                    } else if (rd->size ==0) {
+                        cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "DSStreamRead(header), (readed == 0)", cli->userData);
                     } else {    /* <0: error */
                         cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "DSStreamRead(header) failed", cli->userData);
                     }
-#endif
                     break;
                 case DS_MHB_CLIENT_ST_READ_RESP_BODY:
-                    processed = DSStreamRead(strm, cli->buf, cli->bufSz);
-                    if (processed > 0) {
-                        cli->cb(cli, DS_MHB_CLIENT_CB_RESP_BODY, cli->buf, cli->userData);
-                    } else if (processed == 0) {
+                    if (rd->size > 0) {
+                        cli->cb(cli, DS_MHB_CLIENT_CB_RESP_BODY, rd->buf, cli->userData);
+                    } else if (rd->size == 0) {
                         cli->cb(cli, DS_MHB_CLIENT_CB_RESP_END, NULL, cli->userData);
+                        cli->st = DS_MHB_CLIENT_ST_INITED;
+                        DSStreamClose(cli->strm);
                     } else {
                         cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "DSStreamRead(body) failed", cli->userData);
                     }
@@ -100,9 +116,9 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
                 case DS_MHB_CLIENT_ST_WRITE_REQ:
                     reqHasBody = TRUE;
                 case DS_MHB_CLIENT_ST_WRITE_REQ_HEADERS:
-                    processed = DSStreamSend(strm, cli->buf+cli->filled, cli->bufSz-cli->filled);
-                    if (processed >= 0) {
-                        cli->filled += filled;
+                    sent = DSStreamSend(strm, cli->buf+cli->filled, cli->bufSz-cli->filled);
+                    if (sent >= 0) {
+                        cli->filled += sent;
                     } else {    /* <0: error */
                         cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "DSStreamWrite() failed", cli->userData);
                     }
@@ -128,20 +144,44 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
             switch(cli->st) {
                 case DS_MHB_CLIENT_ST_INITED:
                     break;
+                case DS_MHB_CLIENT_ST_WRITE_REQ:
                 case DS_MHB_CLIENT_ST_WRITE_REQ_HEADERS:
                     StrmCb(strm, DS_STREAM_CB_SENT, NULL, userData);    /* work around */
                     break;
-                case DS_MHB_CLIENT_ST_WRITE_REQ:
                 case DS_MHB_CLIENT_ST_WRITE_BODY:
                 case DS_MHB_CLIENT_ST_READ_RESP_HEADER:
                 case DS_MHB_CLIENT_ST_READ_RESP_BODY:
-                    /* todo */
+                    cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Unexpected connected\n", cli->userData);
                     break;
             }
             break;
         case DS_STREAM_CB_DISCONNECTED:
+            switch(cli->st) {
+                case DS_MHB_CLIENT_ST_INITED:
+                    LDS_DBG("MHB connection closed gracefully\n");
+                    break;
+                case DS_MHB_CLIENT_ST_WRITE_REQ_HEADERS:
+                case DS_MHB_CLIENT_ST_WRITE_REQ:
+                case DS_MHB_CLIENT_ST_WRITE_BODY:
+                case DS_MHB_CLIENT_ST_READ_RESP_HEADER:
+                case DS_MHB_CLIENT_ST_READ_RESP_BODY:
+                    cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Connection closed unexpectedly", cli->userData);
+                    break;
+            }
             break;
         case DS_STREAM_CB_ERROR:
+            switch(cli->st) {
+                case DS_MHB_CLIENT_ST_INITED:
+                    LDS_DBG("MHB connection closed painfully\n");
+                    break;
+                case DS_MHB_CLIENT_ST_WRITE_REQ_HEADERS:
+                case DS_MHB_CLIENT_ST_WRITE_REQ:
+                case DS_MHB_CLIENT_ST_WRITE_BODY:
+                case DS_MHB_CLIENT_ST_READ_RESP_HEADER:
+                case DS_MHB_CLIENT_ST_READ_RESP_BODY:
+                    cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Connection Error", cli->userData);
+                    break;
+            }
             break;
     }
 }
@@ -205,6 +245,15 @@ int DSMhbClientRequest(DSMhbClient* cli, struct DSMhbRequest* req, DSMhbClientCb
         memcpy(cli->buf+copied, req->body, req->bodySz);
         cli->st = DS_MHB_CLIENT_ST_WRITE_REQ;
     }
+    
+    if (cb) {
+        cli->cb = cb;
+    }
+    
+    if (userData) {
+        cli->userData = userData;
+    }
+    
     return 0;
 ERR_FREE_BUF:
     DSFree(cli->buf);
@@ -267,3 +316,113 @@ ERR_OBJECT_DESTY:
     DSObjectDestroy(cli);
 }
 
+typedef struct _DSSimpleHttpClient {
+    DSMhbClient* mCli;
+    
+    unsigned int maxRespSize;
+    
+    int8_t statusCode;
+    DSBuffer *respBuffer;
+    
+    void* userData;
+    DSSimpleHttpClientCb cb;
+}DSSimpleHttpClient;
+
+static void DSSimpleHttpClientDestroy(DSSimpleHttpClient* shc)
+{
+ERR_DESTOY_RESP_BUFFER:
+    DSBufferDestroy(shc->respBuffer);
+ERR_DESTOY_MC:
+    DSMhbClientDestroy(shc->mCli);
+ERR_FREE_SHC:
+    DSFree(shc);
+}
+
+void _MhbClientCb(DSMhbClient* mc, DSMhbClientCbReason reas, const void* data, void* userData)
+{
+    DSSimpleHttpClient *shc;
+    
+    shc = userData;
+    switch (reas) {
+        case DS_MHB_CLIENT_CB_ERROR:
+            shc->cb(data, NULL, shc->userData);
+            DSSimpleHttpClientDestroy(shc);
+            break;
+        case DS_MHB_CLIENT_CB_BODY_WRITABLE:
+            DSMhbClientBodyWriteFinished(mc);
+            break;
+        case DS_MHB_CLIENT_CB_RESP_HEADER:   /* data: DSConstBuf* */
+        {
+            struct DSConstBuf *hdBuf;
+            
+            if (shc->statusCode == -1) {
+                if (!strncmp(hdBuf->buf, DS_CONST_STR_LEN("200"))) {
+                    shc->statusCode = 200;
+                } else {
+                    shc->statusCode = 0;
+                    shc->cb("status code not 200", NULL, shc->userData);
+                    DSSimpleHttpClientDestroy(shc);
+                }
+            }
+            break;
+        }
+        case DS_MHB_CLIENT_CB_RESP_BODY:
+        {
+            struct DSConstBuf *bBuf;
+            
+            if ((DSBufferGetSize(shc->respBuffer)+bBuf->size) > shc->maxRespSize) {
+                shc->cb("Resp body is so large", NULL, shc->userData);
+                DSSimpleHttpClientDestroy(shc);
+            } else {
+                DSBufferCat(shc->respBuffer, bBuf->buf, bBuf->size);
+            }
+            break;
+        }
+        case DS_MHB_CLIENT_CB_RESP_END:
+        {
+            struct DSConstBuf respBuf;
+            
+            respBuf.buf = DSBufferGetPtr(shc->respBuffer);
+            respBuf.size = DSBufferGetSize(shc->respBuffer);
+            shc->cb(NULL, &respBuf, shc->userData);
+            DSSimpleHttpClientDestroy(shc);
+            break;
+        }
+    }
+}
+
+int DSSimpleHttpClientRequest(DSStream* strm, struct DSMhbRequest* req, size_t maxRespSize, DSSimpleHttpClientCb cb, void* userData)
+{
+    DSSimpleHttpClient *shc;
+    
+    if (!strm) {
+        LDS_ERR_OUT(ERR_OUT, "strm == NULL\n");
+    }
+    
+    if (!(shc = (DSSimpleHttpClient*)DSZalloc(sizeof(DSSimpleHttpClient)))) {
+        LDS_ERR_OUT(ERR_OUT, "DSMalloc() failed\n");
+    }
+    
+    if (!(shc->mCli = DSMhbClientNew(strm, _MhbClientCb, shc))) {
+        LDS_ERR_OUT(ERR_FREE_SHC, "DSMhbClientNew() failed");
+    }
+    
+    if (!(shc->respBuffer = DSBufferNew(32, 16))) {
+        LDS_ERR_OUT(ERR_DESTOY_MC, "DSBufferNew(32, 16) failed");
+    }
+    
+    DSMhbClientRequest(shc->mCli, req, NULL, NULL);
+    
+    shc->cb = cb;
+    shc->userData = userData;
+    return 0;
+    
+ERR_DESTOY_RESP_BUFFER:
+    DSBufferDestroy(shc->respBuffer);
+ERR_DESTOY_MC:
+    DSMhbClientDestroy(shc->mCli);
+ERR_FREE_SHC:
+    DSFree(shc);
+ERR_OUT:
+    return -1;
+}
