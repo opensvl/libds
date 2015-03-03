@@ -24,4 +24,9 @@ typedef struct _DSObject DSObject;
 
 struct _DSObject {
 };
+
+int DSObjectInit(DSObject* obj);
+
+int DSObjectExit(DSObject* obj);
+
 #endif

@@ -53,9 +53,9 @@ int DSStreamSend(DSStream* strm, uint8_t* buf, int bufSz);
 void DSStreamSetCb(DSStream* strm, DSStreamCb cb, void* userData);
 
 /* for child classes(drivers) */
-void DSStreamInit(DSStream* strm);
+int DSStreamInit(DSStream* strm);
 
-void DSStreamExit();
+int DSStreamExit(DSStream* strm);
 
 void DSStreamCallCb(DSStream* strm, DSStreamCbReason reas, void* data);
 

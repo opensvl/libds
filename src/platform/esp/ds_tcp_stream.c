@@ -127,15 +127,17 @@ DSTcpStream* DSTcpStreamNew(uint8_t host[4], uint16_t port)
         LDS_ERR_OUT(ERR_OUT, "\n");
     }
     
-    DSStreamInit((DSStream*)ets);
+    if (DSStreamInit((DSStream*)ets)) {
+        LDS_ERR_OUT(ERR_FREE_ETS, "\n");
+    }
     
     if (!(ets->ec = (struct espconn *)DSZalloc(sizeof(struct espconn)))) {
-        LDS_ERR_OUT(ERR_FREE_ETS, "\n");
+        LDS_ERR_OUT(ERR_EXIT_STRM, "\n");
     }
 	ets->ec->type = ESPCONN_TCP;
 	ets->ec->state = ESPCONN_CONNECT;
 	if (!(ets->ec->proto.tcp = (esp_tcp *)DSZalloc(sizeof(esp_tcp)))) {
-        LDS_ERR_OUT(ERR_FREE_TCP, "\n");
+        LDS_ERR_OUT(ERR_FREE_EC, "\n");
     }
 	ets->ec->proto.tcp->local_port = espconn_port();
 	ets->ec->proto.tcp->remote_port = port;
@@ -158,10 +160,10 @@ ERR_FREE_TCP:
     DSFree(ets->ec->proto.tcp);
 ERR_FREE_EC:
     DSFree(ets->ec);
+ERR_EXIT_STRM:
+    DSStreamExit((DSStream*)ets);
 ERR_FREE_ETS:
     DSFree(ets);
-ERR_EXIT_STRM:
-    DSStreamExit(ets);
 ERR_OUT:
     return NULL;
 }
@@ -175,8 +177,8 @@ ERR_FREE_TCP:
     DSFree(ets->ec->proto.tcp);
 ERR_FREE_EC:
     DSFree(ets->ec);
+ERR_EXIT_STRM:
+    DSStreamExit((DSStream*)ets);
 ERR_FREE_ETS:
     DSFree(ets);
-ERR_EXIT_STRM:
-    DSStreamExit(ets);
 }

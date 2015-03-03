@@ -18,19 +18,19 @@
  */
 #include "ds_stream.h"
 
-void DSStreamInit(DSStream* strm)
+int DSStreamInit(DSStream* strm)
 {
-    DSObjectInit(strm);
+    return DSObjectInit((DSObject*)strm);
 }
 
-void DSStreamExit(DSStream* strm)
+int DSStreamExit(DSStream* strm)
 {
-    DSObjectExit(strm);
+    return DSObjectExit((DSObject*)strm);
 }
 
 int DSStreamSend(DSStream* strm, uint8_t* buf, int bufSz)
 {
-    return strm->Write(strm, buf, bufSz);
+    return strm->Send(strm, buf, bufSz);
 }
 
 int DSStreamConnect(DSStream* strm)

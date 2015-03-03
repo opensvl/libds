@@ -88,7 +88,7 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
                             memcpy(cli->buf, rd->buf+parsed, (cli->filled = rd->size-parsed));
                         }
                         if (start == NULL) {
-                            DSStreamFinderDestroy(&cli->sf);
+                            DSStreamFinderExit(&cli->sf);
                             cli->st = DS_MHB_CLIENT_ST_READ_RESP_BODY;
                             cli->cb(cli, DS_MHB_CLIENT_CB_RESP_BODY, cli->buf, cli->userData);
                         }
@@ -102,9 +102,9 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
                     if (rd->size > 0) {
                         cli->cb(cli, DS_MHB_CLIENT_CB_RESP_BODY, rd->buf, cli->userData);
                     } else if (rd->size == 0) {
+                        DSStreamClose(cli->strm);
                         cli->cb(cli, DS_MHB_CLIENT_CB_RESP_END, NULL, cli->userData);
                         cli->st = DS_MHB_CLIENT_ST_INITED;
-                        DSStreamClose(cli->strm);
                     } else {
                         cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "DSStreamRead(body) failed", cli->userData);
                     }
@@ -164,6 +164,8 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
                 case DS_MHB_CLIENT_ST_WRITE_REQ:
                 case DS_MHB_CLIENT_ST_WRITE_BODY:
                 case DS_MHB_CLIENT_ST_READ_RESP_HEADER:
+                    cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Connection closed unexpectedly", cli->userData);
+                    break;
                 case DS_MHB_CLIENT_ST_READ_RESP_BODY:
                     cli->cb(cli, DS_MHB_CLIENT_CB_ERROR, "Connection closed unexpectedly", cli->userData);
                     break;
@@ -194,15 +196,21 @@ DSMhbClient* DSMhbClientNew(DSStream* strm, DSMhbClientCb cb, void* userData)
         LDS_ERR_OUT(ERR_OUT, "\n");
     }
     
+    if (DSObjectInit((DSObject*)cli)) {
+        LDS_ERR_OUT(ERR_FREE_CLI, "");
+    }
+    
     cli->strm = strm;
     DSStreamSetCb(cli->strm, StrmCb, cli);
     cli->userData = userData;
     cli->cb = cb;
     cli->st = DS_MHB_CLIENT_ST_INITED;
     return cli;
-    
-ERR_OBJECT_DESTY:
-    DSObjectDestroy(cli);
+
+ERR_EXIT_OBJ:
+    DSObjectExit((DSObject*)cli);
+ERR_FREE_CLI:
+    DSFree(cli);
 ERR_OUT:
     return NULL;
 }
@@ -312,8 +320,10 @@ void DSMhbClientStopRequest(DSMhbClient* cli)
 void DSMhbClientDestroy(DSMhbClient* cli)
 {
     DSMhbClientStopRequest(cli);
-ERR_OBJECT_DESTY:
-    DSObjectDestroy(cli);
+ERR_EXIT_OBJ:
+    DSObjectExit((DSObject*)cli);
+ERR_FREE_CLI:
+    DSFree(cli);
 }
 
 typedef struct _DSSimpleHttpClient {

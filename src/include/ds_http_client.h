@@ -57,7 +57,7 @@ struct _DSMhbClient {
 };
 
 struct DSMhbRequest {
-    const char* headers;
+    const char* *headers;
     uint8_t headersCount;
     const char* body;   /* if null, CB_BODY_WRITEABLE will be called */
     int bodySz;

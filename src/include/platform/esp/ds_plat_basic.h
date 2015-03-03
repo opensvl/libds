@@ -24,14 +24,19 @@
 #include <mem.h>
 #include <osapi.h>
 
-#define fprintf(__FP, ...)	printf(__VA_ARGS__);
+#define fprintf(__FP, ...)	os_printf(__VA_ARGS__);
 
-#define DSMalloc os_malloc
+#define DSMalloc (void*)os_malloc
 #define DSFree os_free
-#define DSZalloc os_zalloc
+#define DSZalloc (void*)os_zalloc
 void* DSRealloc(void *ptr, size_t size);
 #define DSMemcpy os_memcpy
 #define DSMemcmp os_memcmp
+
+#define DSStrlen    strlen
+#define DSStrncpy   strncpy
+#define DSStrcpy   strcpy
+
 
 #define DS_FUNC_ATTR
 

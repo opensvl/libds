@@ -37,6 +37,8 @@
 
 #define DS_CONST_STR_LEN(__str) (__str),sizeof(__str)-1
 
+#define DS_ARRAY_SIZE(__ary)   (sizeof(__ary)/sizeof(__ary[0]))
+
 struct DSConstBuf {
     const uint8_t* buf;
     size_t size;

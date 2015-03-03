@@ -18,7 +18,7 @@
  */
 
 #include "lds_log.h"
-#include "ds_utils.c"
+#include "ds_utils.h"
 #include "ds_buffer.h"
 
 int DSBufferInit(DSBuffer* self, size_t minSize, size_t unit)
