@@ -74,6 +74,7 @@ endif
 #####################################################
 DS_OBJS = $(DS_PLAT)/ds_plat_basic.o
 DS_OBJS += ds_log.o ds_utils.o ds_string.o ds_buffer.o ds_list.o ds_crypt.o ds_object.o ds_stream.o
+DS_OBJS += $(DS_PLAT)/ds_event.o
 DS_OBJS += $(DS_PLAT)/ds_udp_stream.o
 DS_OBJS += $(DS_PLAT)/ds_tcp_stream.o
 DS_OBJS += ds_http_client.o
