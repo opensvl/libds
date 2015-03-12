@@ -30,7 +30,7 @@ typedef enum {
     DS_STREAM_CB_CONNECTED = 0,
     DS_STREAM_CB_RECVED,   /* data: struct DSConstBuf* */
     DS_STREAM_CB_SENT,
-    DS_STREAM_CB_DISCONNECTED,
+    DS_STREAM_CB_DISCONNECTED   /* remote disconnected */
 }DSStreamCbReason;
 
 
@@ -40,13 +40,11 @@ struct _DSStream {
     DSObject obj;
     int(*Send)(DSStream* strm, uint8_t* buf, int bufSz);
     int(*Connect)(DSStream* strm);
-    int(*Close)(DSStream* strm);
     DSStreamCb cb;
     void *userData;
 };
 
 int DSStreamConnect(DSStream* strm);
-int DSStreamClose(DSStream* strm);
 
 int DSStreamSend(DSStream* strm, uint8_t* buf, int bufSz);
 

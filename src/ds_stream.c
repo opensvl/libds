@@ -38,11 +38,6 @@ int DSStreamConnect(DSStream* strm)
     return strm->Connect(strm);
 }
 
-int DSStreamClose(DSStream* strm)
-{
-    return strm->Close(strm);
-}
-
 void DSStreamSetCb(DSStream* strm, DSStreamCb cb, void* userData)
 {
     strm->cb = cb;

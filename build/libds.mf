@@ -29,7 +29,7 @@ DS_CC ?= gcc
 DS_AR ?= ar
 DS_AR_FLAGS ?= rcs
 DS_CFLAGS += -Wall -Wno-unused-label -Wno-unused-function
-DS_CFLAGS += -fPIC
+DS_CFLAGS += -fPIC -g
 DS_LDFLAGS += -Wl,--as-needed
 DS_LDFLAGS += -Wl,-soname -Wl,$(TARGET)
 

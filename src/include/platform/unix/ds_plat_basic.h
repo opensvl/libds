@@ -18,9 +18,25 @@
  */
 #ifndef _DS_PLAT_H_
 #define _DS_PLAT_H_
-
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>	/* for errno, strerror */
+
+#define BOOL int
+#define TRUE 1
+#define FALSE 0
+
+#define DSMalloc malloc
+#define DSFree free
+void* DSZalloc(size_t size);
+#define DSRealloc realloc
+#define DSMemcpy memcpy
+#define DSMemcmp memcmp
+
+#define DSStrlen    strlen
+#define DSStrncpy   strncpy
+#define DSStrcpy   strcpy
 
 #endif

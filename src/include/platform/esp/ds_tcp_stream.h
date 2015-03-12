@@ -26,10 +26,11 @@ typedef struct _DSTcpStream DSTcpStream;
 struct _DSTcpStream {
     DSStream _strm;
     struct espconn *ec;
-    BOOL connect;
+    BOOL remoteDisconn;
+    BOOL didDisconn;
 };
 
-DSTcpStream* DSTcpStreamNew(uint8_t host[4], uint16_t port);
+DSTcpStream* DSTcpStreamNew(const uint8_t host[4], const uint16_t port);
 
 void DSTcpStreamDestroy(DSTcpStream* ets);
 #endif

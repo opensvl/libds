@@ -23,6 +23,7 @@
 #include "ds_stream.h"
 #include "ds_tcp_stream.h"
 #include "lds_log.h"
+static void _DSTcpStreamDestroy(DSTcpStream* ets);
 
 static int DSTcpStreamSend(DSStream* strm, uint8_t* buf, int bufSz)
 {
@@ -36,18 +37,25 @@ static int DSTcpStreamSend(DSStream* strm, uint8_t* buf, int bufSz)
 static int DSTcpStreamConnect(DSStream* strm)
 {
     #define ets ((DSTcpStream*)strm)
-    ets->connect = TRUE;
+    
+    ets->remoteDisconn = FALSE;
+    BOOL didDisconn = FALSE;
     return espconn_connect(ets->ec);
     
     #undef ets
 }
 
-static int DSTcpStreamClose(DSStream* strm)
+void DSTcpStreamDestroy(DSTcpStream* strm)
 {
     #define ets ((DSTcpStream*)strm)
-    ets->connect = FALSE;
-    return espconn_disconnect(ets->ec);
     
+    if (!ets->remoteDisconn) {  /* we do disconn */
+        ets->didDisconn = TRUE;
+        espconn_disconnect(ets->ec);
+    } else {    /* remote did disconn */
+        _DSTcpStreamDestroy(ets);
+    }
+
     #undef ets
 }
 
@@ -105,7 +113,12 @@ static void ICACHE_FLASH_ATTR EspConnDisconnectedCb(void *arg)
 
     ets = (DSTcpStream*)ec->reverse;
     
-    strm->cb(strm, DS_STREAM_CB_DISCONNECTED, NULL, strm->userData);
+    if (!ets->didDisconn) { /* remote did disconn */
+        strm->cb(strm, DS_STREAM_CB_DISCONNECTED, NULL, strm->userData);
+        ets->remoteDisconn = TRUE;
+    } else {    /* we disconn */
+        _DSTcpStreamDestroy(ets);
+    }
     
     #undef strm
     #undef ec
@@ -119,7 +132,7 @@ static void ICACHE_FLASH_ATTR EspConnDisconnectedCb(void *arg)
     #undef ec
 }
 
-DSTcpStream* DSTcpStreamNew(uint8_t host[4], uint16_t port) 
+DSTcpStream* DSTcpStreamNew(const uint8_t host[4], const uint16_t port) 
 {
     DSTcpStream* ets;
     
@@ -152,7 +165,6 @@ DSTcpStream* DSTcpStreamNew(uint8_t host[4], uint16_t port)
     
     DSRewriteVFunc(DSStream, ets, Send, DSTcpStreamSend);
     DSRewriteVFunc(DSStream, ets, Connect, DSTcpStreamConnect);
-    DSRewriteVFunc(DSStream, ets, Close, DSTcpStreamClose);
     
     return ets;
     
@@ -168,11 +180,9 @@ ERR_OUT:
     return NULL;
 }
 
-void DSTcpStreamDestroy(DSTcpStream* ets)
+static void _DSTcpStreamDestroy(DSTcpStream* ets)
 {
-    if (ets->connect) {
-        DSTcpStreamClose((DSStream*)ets);
-    }
+    
 ERR_FREE_TCP:
     DSFree(ets->ec->proto.tcp);
 ERR_FREE_EC:

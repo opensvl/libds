@@ -21,6 +21,7 @@
 
 #include "ds_utils.h"
 #include "ds_object.h"
+#include "ds_tcp_stream.h"
 
 #define DS_MHB_HEADER_MAX_LEN   256
 
@@ -31,10 +32,10 @@ typedef enum {
     DS_MHB_CLIENT_CB_BODY_WRITABLE,
     DS_MHB_CLIENT_CB_RESP_HEADER,   /* data: DSConstBuf* */
     DS_MHB_CLIENT_CB_RESP_BODY,
-    DS_MHB_CLIENT_CB_RESP_END
+    DS_MHB_CLIENT_CB_DISCONN   /* called only server ended connection gracefully */
 }DSMhbClientCbReason;
 
-typedef void(*DSMhbClientCb)(DSMhbClient* cli, DSMhbClientCbReason reas, const void* data, void* userData);
+typedef void*(*DSMhbClientCb)(DSMhbClient* cli, DSMhbClientCbReason reas, const void* data, void* userData);
 
 struct _DSMhbClient {
     DSObject obj;
@@ -50,10 +51,9 @@ struct _DSMhbClient {
         DS_MHB_CLIENT_ST_READ_RESP_HEADER,
         DS_MHB_CLIENT_ST_READ_RESP_BODY
     }st;
-    char* buf;
-    int bufSz;
+    uint8_t* buf;
+    size_t bufSz;
     int filled;
-    DSStreamFinder sf;
 };
 
 struct DSMhbRequest {
@@ -69,13 +69,11 @@ int DSMhbClientRequest(DSMhbClient* cli, struct DSMhbRequest*, DSMhbClientCb cb,
 
 void DSMhbClientBodyWriteFinished(DSMhbClient* cli);
 
-void DSMhbClientStopRequest(DSMhbClient* cli);
-
 void DSMhbClientDestroy(DSMhbClient* cli);
 
 
 typedef void(*DSSimpleHttpClientCb)(const char* err, struct DSConstBuf* respBuf, void* userData);
 
-int DSSimpleHttpClientRequest(DSStream* strm, struct DSMhbRequest* req, size_t maxRespSize, DSSimpleHttpClientCb cb, void* userData);
+int DSSimpleHttpClientRequest(const uint8_t ip[4], const uint16_t port, struct DSMhbRequest* req, size_t maxRespSize, DSSimpleHttpClientCb cb, void* userData, void* evtBase);
 
 #endif
