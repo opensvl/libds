@@ -38,7 +38,6 @@ struct _DSTcpStream {
     struct event *connEvt;
     struct event *rdEvt;
     struct event *wrtEvt;
-    struct event_base *evtBase;
     
     enum {
         DS_TCP_STRM_ST_NONE,
@@ -50,8 +49,6 @@ struct _DSTcpStream {
 };
 
 DSTcpStream* DSTcpStreamNew(const uint8_t host[4], const uint16_t port);
-
-void DSTcpStreamSetEventBase(DSTcpStream* tcpStrm, void* base);
 
 void DSTcpStreamDestroy(DSTcpStream* ets);
 

@@ -38,6 +38,16 @@ int DSStreamConnect(DSStream* strm)
     return strm->Connect(strm);
 }
 
+void DSStreamSetEventBase(DSStream* strm, void* evtBase)
+{
+    strm->evtBase = evtBase;
+}
+
+void* DSStreamGetEventBase(DSStream* strm)
+{
+    return strm->evtBase;
+}
+
 void DSStreamSetCb(DSStream* strm, DSStreamCb cb, void* userData)
 {
     strm->cb = cb;

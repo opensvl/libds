@@ -104,18 +104,21 @@ static void WriteCb(int fd, short ev, void *arg)
 static void ConnCb(int fd, short ev, void *arg)
 {
     DSTcpStream *tcpStrm;
-
+    DSEventBase *evtBase;
+    
     LDS_DBG_IN_FUNC();
     tcpStrm = arg;
 
     event_del(tcpStrm->connEvt);
     event_free(tcpStrm->connEvt);
     
-    if (!(tcpStrm->rdEvt = event_new(tcpStrm->evtBase, tcpStrm->sock, EV_READ | EV_PERSIST, ReadCb, tcpStrm))) {
+    evtBase = DSStreamGetEventBase((DSStream*)tcpStrm);
+    
+    if (!(tcpStrm->rdEvt = event_new(evtBase, tcpStrm->sock, EV_READ | EV_PERSIST, ReadCb, tcpStrm))) {
         LDS_ERR_OUT(ERR_OUT, "event_new(EV_READ) failed\n");
     }
 
-    if (!(tcpStrm->wrtEvt = event_new(tcpStrm->evtBase, tcpStrm->sock, EV_WRITE | EV_PERSIST, WriteCb, tcpStrm))) {
+    if (!(tcpStrm->wrtEvt = event_new(evtBase, tcpStrm->sock, EV_WRITE | EV_PERSIST, WriteCb, tcpStrm))) {
         LDS_ERR_OUT(ERR_FREE_RD_EVT, "event_new(EV_WRITE) failed\n");
     }
     
@@ -144,10 +147,12 @@ static int DSTcpStreamConnect(DSStream* strm)
 {
     struct sockaddr_in sa;
     DSTcpStream *tcpStrm;
+    DSEventBase *evtBase;
     
     LDS_DBG_IN_FUNC();
     tcpStrm = (DSTcpStream*)strm;
-
+    
+    evtBase = DSStreamGetEventBase((DSStream*)tcpStrm);
 	if ((tcpStrm->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		LDS_ERR_OUT(ERR_OUT, "socket() failed\n");
 	}
@@ -166,7 +171,7 @@ static int DSTcpStreamConnect(DSStream* strm)
         LDS_ERR_OUT(ERR_CLOSE_SOCK, "connect() failed, erro: %s\n", strerror(errno));
     }
 	
-    if (!(tcpStrm->connEvt = event_new(tcpStrm->evtBase, tcpStrm->sock, EV_WRITE, ConnCb, tcpStrm))) {
+    if (!(tcpStrm->connEvt = event_new(evtBase, tcpStrm->sock, EV_WRITE, ConnCb, tcpStrm))) {
         LDS_ERR_OUT(ERR_CLOSE_SOCK, "event_new() failed\n");
     }
     
@@ -256,9 +261,4 @@ ERR_FREE_ETS:
     DSFree(tcpStrm);
 ERR_OUT:
     return NULL;
-}
-
-void DSTcpStreamSetEventBase(DSTcpStream* tcpStrm, void* base)
-{
-    tcpStrm->evtBase = base;
 }

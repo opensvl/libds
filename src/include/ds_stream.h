@@ -38,6 +38,7 @@ typedef void(*DSStreamCb)(DSStream* strm, DSStreamCbReason reas, void* data, voi
 
 struct _DSStream {
     DSObject obj;
+    void* evtBase;
     int(*Send)(DSStream* strm, uint8_t* buf, int bufSz);
     int(*Connect)(DSStream* strm);
     DSStreamCb cb;
@@ -47,6 +48,10 @@ struct _DSStream {
 int DSStreamConnect(DSStream* strm);
 
 int DSStreamSend(DSStream* strm, uint8_t* buf, int bufSz);
+
+void DSStreamSetEventBase(DSStream* strm, void* evtBase);
+
+void* DSStreamGetEventBase(DSStream* strm);
 
 void DSStreamSetCb(DSStream* strm, DSStreamCb cb, void* userData);
 

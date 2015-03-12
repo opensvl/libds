@@ -26,7 +26,6 @@
 static void DSMhbClientCleanupBuf(DSMhbClient* cli)
 {
     if (cli->buf) {
-        LDS_DBG_N();
         DSFree(cli->buf);
         cli->buf = NULL;
         cli->bufSz = 0;
@@ -69,20 +68,16 @@ static void StrmCb(DSStream* strm, DSStreamCbReason reas, void* data, void* user
                                     memcpy(cli->buf+cli->filled, start, seLen);
                                     hdBuf.size = (cli->filled + seLen);
                                     hdBuf.buf = cli->buf;
-                                    LDS_DBG_N();
                                     if (!(cli->cb(cli, DS_MHB_CLIENT_CB_RESP_HEADER, &hdBuf, cli->userData))) {
                                         return;
                                     } 
-                                    LDS_DBG_N();
                                     cli->filled = 0;
                                 } else {
                                     hdBuf.size = seLen;
                                     hdBuf.buf = start;
-                                    LDS_DBG_N();
                                     if (!(cli->cb(cli, DS_MHB_CLIENT_CB_RESP_HEADER, &hdBuf, cli->userData))) {
                                         return;
                                     }
-                                    LDS_DBG_N();
                                 }
                             }
                             
@@ -312,18 +307,15 @@ int DSMhbClientRequest(DSMhbClient* cli, struct DSMhbRequest* req, DSMhbClientCb
     if (userData) {
         cli->userData = userData;
     }
-    LDS_DBG_N();
+
     if (DSStreamConnect(cli->strm)) {
         LDS_ERR_OUT(ERR_FREE_BUF, "\n");
     }
-    LDS_DBG_N();
     return 0;
     
 ERR_FREE_BUF:
-LDS_DBG_N();
     DSFree(cli->buf);
     cli->buf =  NULL;
-    LDS_DBG_N();
 ERR_OUT:
     return -1;
 }
@@ -373,12 +365,9 @@ void DSMhbClientDestroy(DSMhbClient* cli)
 {
     _DSMhbClientStopRequest(cli);
 ERR_EXIT_OBJ:
-LDS_DBG_N();
     DSObjectExit((DSObject*)cli);
 ERR_FREE_CLI:
-LDS_DBG_N();
     DSFree(cli);
-    LDS_DBG_N();
 }
 
 typedef struct _DSSimpleHttpClient {
@@ -536,21 +525,21 @@ int DSSimpleHttpClientRequest(const uint8_t ip[4], const uint16_t port, struct D
     }
     
     if (evtBase) {
-        DSTcpStreamSetEventBase((DSTcpStream*)shc->strm, evtBase);
+        DSStreamSetEventBase((DSStream*)shc->strm, evtBase);
     }
-    LDS_DBG_N();
+
     if (!(shc->mCli = DSMhbClientNew(shc->strm, _MhbClientCb, shc))) {
         LDS_ERR_OUT(ERR_DESTOY_TCP_STRM, "DSMhbClientNew() failed");
     }
-    LDS_DBG_N();
+
     if (!(shc->respBuffer = DSBufferNew(maxRespSize>>1, 16))) {
         LDS_ERR_OUT(ERR_DESTOY_MC, "DSBufferNew(%d, 16) failed", maxRespSize>>1);
     }
-    LDS_DBG_N();
+
     if (DSMhbClientRequest(shc->mCli, req, NULL, NULL)) {
         LDS_ERR_OUT(ERR_DESTOY_RESP_BUFFER, "DSMhbClientRequest(%s) failed\n", req->headers[0]);
     }
-    LDS_DBG_N();
+
     shc->statusCode = -1;
     shc->contentLength = -1;
     
@@ -560,16 +549,12 @@ int DSSimpleHttpClientRequest(const uint8_t ip[4], const uint16_t port, struct D
     return 0;
     
 ERR_DESTOY_RESP_BUFFER:
-LDS_DBG_N();
     DSBufferDestroy(shc->respBuffer);
 ERR_DESTOY_MC:
-LDS_DBG_N();
     DSMhbClientDestroy(shc->mCli);
 ERR_DESTOY_TCP_STRM:
-LDS_DBG_N();
     DSTcpStreamDestroy((DSTcpStream*)shc->strm);
 ERR_FREE_SHC:
-LDS_DBG_N();
     DSFree(shc);
 ERR_OUT:
     return -1;
