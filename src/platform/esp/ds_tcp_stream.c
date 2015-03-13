@@ -23,13 +23,19 @@
 #include "ds_stream.h"
 #include "ds_tcp_stream.h"
 #include "lds_log.h"
+
+#define ESP_CONN_SENT_MAX_SIZE  768
+
 static void _DSTcpStreamDestroy(DSTcpStream* ets);
 
 static int DSTcpStreamSend(DSStream* strm, uint8_t* buf, int bufSz)
 {
     #define ets ((DSTcpStream*)strm)
     
-    bufSz = bufSz%768;
+    if (bufSz > ESP_CONN_SENT_MAX_SIZE) {
+        bufSz = ESP_CONN_SENT_MAX_SIZE;
+    }
+
     if (espconn_sent(ets->ec, buf, bufSz)) {
         return 0;
     } else {
