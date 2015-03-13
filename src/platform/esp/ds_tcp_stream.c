@@ -29,7 +29,12 @@ static int DSTcpStreamSend(DSStream* strm, uint8_t* buf, int bufSz)
 {
     #define ets ((DSTcpStream*)strm)
     
-    return espconn_sent(ets->ec, buf, bufSz);
+    bufSz = bufSz%768;
+    if (espconn_sent(ets->ec, buf, bufSz)) {
+        return 0;
+    } else {
+        return bufSz;
+    }
     
     #undef ets
 }
