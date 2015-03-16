@@ -21,12 +21,29 @@
 #include "ds_plat_basic.h"
 
 typedef struct _DSObject DSObject;
-
 struct _DSObject {
 };
 
 int DSObjectInit(DSObject* obj);
 
 int DSObjectExit(DSObject* obj);
+
+typedef struct _DSEventObject DSEventObject;
+
+struct _DSEventObject {
+    DSObject _obj;
+    void* userData;
+    void* cb;
+};
+
+int DSEventObjectInit(DSEventObject* obj);
+
+int DSEventObjectExit(DSEventObject* obj);
+
+void DSEventObjectSetCb(DSEventObject* obj, void* cb, void* userData);
+
+void* DSEventObjectGetCb(DSEventObject* obj);
+
+void* DSEventObjectGetUserData(DSEventObject* obj);
 
 #endif
