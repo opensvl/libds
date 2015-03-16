@@ -52,12 +52,15 @@ ESP_SDK_DIR ?= ../../esp8266/sdk/esp_iot_sdk
 ESP_SDK_INC_DIR ?= $(ESP_SDK_DIR)/include
 ESP_SDK_LIB_DIR ?= $(ESP_SDK_DIR)/lib
 
+LWIP_DIR ?= $(ESP_SYS_DIR)/../esp8266-liblwip
+ESP_LWIP_INC_DIR ?= $(LWIP_DIR)/include
+
 DS_CC ?= $(ESP_CROSS_COMPILE)gcc
 DS_AR ?= $(ESP_CROSS_COMPILE)ar
 DS_AR_FLAGS ?= cru
 
 DS_CFLAGS += -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH
-DS_CFLAGS += -I$(ESP_SYS_INC_DIR) -I$(ESP_SDK_INC_DIR)
+DS_CFLAGS += -I$(ESP_SYS_INC_DIR) -I$(ESP_SDK_INC_DIR) -I$(ESP_LWIP_INC_DIR)
 endif
 
 ifeq ($(DS_DEBUG),yes)
@@ -77,7 +80,7 @@ DS_OBJS += ds_log.o ds_utils.o ds_string.o ds_buffer.o ds_list.o ds_crypt.o ds_o
 DS_OBJS += $(DS_PLAT)/ds_event.o
 DS_OBJS += $(DS_PLAT)/ds_dns.o
 DS_OBJS += $(DS_PLAT)/ds_udp_stream.o
-DS_OBJS += $(DS_PLAT)/ds_tcp_stream.o
+DS_OBJS += $(DS_PLAT)/ds_tcp_client.o
 DS_OBJS += ds_http_client.o
 
 ifeq ($(ENABLE_XMPP_CLIENT), yes)
@@ -96,6 +99,7 @@ help:
 	@echo 'CFG_LDFLAGS <$(DS_LDFLAGS)>'
 	@echo 'CFG_ESP_SYS_DIR <$(ESP_SYS_DIR)>'
 	@echo 'CFG_ESP_SDK_DIR <$(ESP_SDK_DIR)>'
+	@echo 'CFG_LWIP_DIR <$(LWIP_DIR)>'
 	@echo 'CFG_ESP_CROSS_COMPILE <$(ESP_CROSS_COMPILE)>'
 	@echo 'CFG_ENABLE_XMPP_CLIENT(yes | no) <$(DS_ENABLE_XMPP_CLIENT)>'
 	@echo ''
@@ -110,6 +114,7 @@ configure:
 	@if [ _${CFG_PLAT} != _ ]; then echo DS_PLAT = ${CFG_PLAT} >> config.mk; fi
 	@if [ _${CFG_ESP_SYS_DIR} != _ ]; then echo ESP_SYS_DIR = $(CFG_ESP_SYS_DIR) >> config.mk; fi
 	@if [ _${CFG_ESP_SDK_DIR} != _ ]; then echo ESP_SDK_DIR = $(CFG_ESP_SDK_DIR) >> config.mk; fi
+	@if [ _${CFG_LWIP_DIR} != _ ]; then echo LWIP_DIR = $(CFG_LWIP_DIR) >> config.mk; fi
 	@if [ _${CFG_ESP_CROSS_COMPILE} != _ ]; then echo ESP_CROSS_COMPILE = $(CFG_ESP_CROSS_COMPILE) >> config.mk; fi
 	@if [ _${CFG_ENABLE_XMPP_CLIENT} != _ ]; then echo DS_ENABLE_XMPP_CLIENT = $(CFG_ENABLE_XMPP_CLIENT) >> config.mk; fi
 	

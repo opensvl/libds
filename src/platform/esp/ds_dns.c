@@ -19,71 +19,46 @@
  */
 #include "ds_plat_basic.h"
 #include "ds_utils.h"
-#include "user_interface.h"
-#include "espconn.h"
 #include "lds_log.h"
 #include "ds_dns.h"
 
-typedef struct EspGetAddrInfo {
-    DSGetAddrInfo dGai;
-    
-    struct espconn ec;
-    ip_addr_t ip;
-    
-    DSGetAddrInfoCb cb;
-    void *userdData;
-}EspGetAddrInfo;
+#include "lwip/ip.h"
 
-static void ICACHE_FLASH_ATTR DnsFound(const char *name, ip_addr_t *ipaddr, void *arg)
+
+static void found(const char *name, struct ip_addr *ipaddr, void *userData)
 {
-    EspGetAddrInfo *eGai;
-    struct DSAddrInfo ai;
+    uint8_t ip[4];
     
-    eGai = ((struct espconn*)arg)->reverse;
+    ip[0] = ip4_addr1(ipaddr);
+    ip[1] = ip4_addr2(ipaddr);
+    ip[2] = ip4_addr3(ipaddr);
+    ip[3] = ip4_addr4(ipaddr);
     
-    ai.ip = (uint8_t*)ipaddr->addr;
-    
-    eGai->cb((DSGetAddrInfo*)eGai, NULL, &ai, eGai->userdData);
+    if (ipaddr) {
+        cb(name, ip, userData);
+    } else {
+        cb(name, NULL, userData);
+    }
 }
 
-DSGetAddrInfo* DSGetAddrInfoNew(const char *nodename, const char *servname,
-        const struct DSAddrInfo* hintsIn,
-        DSGetAddrInfoCb cb, void* userData, 
-        void* evtBase)
+int DSSimpleGetAddrInfo(const char *hostname, int timeout, DSSimpleGetAddrInfoCb cb, void *userData)
 {
-    DSGetAddrInfo* gai;
-    EspGetAddrInfo* eGai;
-    int ret;
+    struct ip_addr addr;
+    err_t ret;
     
-    if (!(gai = DSZalloc(sizeof(EspGetAddrInfo)))) {
-        LDS_ERR_OUT(ERR_OUT, "\n");
+    ret = dns_gethostbyname(hostname, &addr, found, userData);
+    if (ret == ERR_OK) {
+        uint8_t ip[4];
+    
+        ip[0] = ip4_addr1(&addr);
+        ip[1] = ip4_addr2(&addr);
+        ip[2] = ip4_addr3(&addr);
+        ip[3] = ip4_addr4(&addr);
+        cb(hostname, ip, userData);
+        return 0;
+    } else if (ret == ERR_INPROGRESS) {
+        return 0;
+    } else {
+        return -1;
     }
-    eGai = (EspGetAddrInfo*)gai;
-    
-    eGai->ec.reverse = eGai;
-    ret = espconn_gethostbyname(&eGai->ec, "baidu.com", &eGai->ip, DnsFound);
-    
-    if (ret != ESPCONN_OK && ret != ESPCONN_INPROGRESS) {
-        LDS_ERR_OUT(ERR_FREE_GAI, "espconn_gethostbyname() failed\n");
-    }
-    
-    return gai;
-ERR_DEL_CONN:
-    espconn_delete(&eGai->ec);
-ERR_FREE_GAI:
-    DSFree(gai);
-ERR_OUT:
-    return NULL;
-}
-
-void DSGetAddrInfoDestroy(DSGetAddrInfo *gai)
-{
-    EspGetAddrInfo* eGai;
-    
-    eGai = (EspGetAddrInfo*)gai;
-    
-ERR_DEL_CONN:
-    espconn_delete(&eGai->ec);
-ERR_FREE_GAI:
-    DSFree(gai);
 }

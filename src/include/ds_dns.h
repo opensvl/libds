@@ -17,25 +17,7 @@
  * 
  */
 
-typedef struct _DSGetAddrInfo DSGetAddrInfo;
+typedef void(DSSimpleGetAddrInfoCb)(const char *name, uint8_t* addr, void *userData);
 
-struct DSAddrInfo {
-    uint8_t* ip;
-};
-
-typedef void (*DSGetAddrInfoCb)(DSGetAddrInfo* gai, void* err, struct DSAddrInfo *res, void *userData);
-
-
-
-struct _DSGetAddrInfo{
-};
-
-
-DSGetAddrInfo* DSGetAddrInfoNew(
-    const char *nodename, const char *servname,
-    const struct DSAddrInfo* hintsIn,
-    DSGetAddrInfoCb cb, void* userData, void* evtBase);
-
-void DSGetAddrInfoDestroy(DSGetAddrInfo* gai);
-
+int DSSimpleGetAddrInfo(const char *hostname, int timeout, DSSimpleGetAddrInfoCb cb, void *userData);
 
