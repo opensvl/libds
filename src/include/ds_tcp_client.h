@@ -16,40 +16,13 @@
  * License along with this library.
  * 
  */
-#ifndef _DS_TCP_STREAM_
-#define _DS_TCP_STREAM_
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <event.h>
-#include "ds_event.h"
-#include "ds_plat_basic.h"
+#ifndef _DS_TCP_CLIENT_
+#define _DS_TCP_CLIENT_
 #include "ds_stream.h"
 
+typedef struct _DSTcpClient DSTcpClient;
 
-typedef struct _DSTcpStream DSTcpStream;
+DSTcpClient* DSTcpClientNew(const uint8_t* bind, const uint16_t port, const uint8_t* toIp, const uint16_t toPort);
 
-struct _DSTcpStream {
-    DSStream _strm;
-    uint8_t ip[4];
-    uint16_t port;
-    
-    int sock;
-    struct event *connEvt;
-    struct event *rdEvt;
-    struct event *wrtEvt;
-    
-    enum {
-        DS_TCP_STRM_ST_NONE,
-        DS_TCP_STRM_ST_CONNECTING,
-        DS_TCP_STRM_ST_CONNECTED,
-    }st;
-    
-    uint8_t buf[1024*4];
-};
-
-DSTcpStream* DSTcpStreamNew(const uint8_t host[4], const uint16_t port);
-
-void DSTcpStreamDestroy(DSTcpStream* ets);
-
+void DSTcpClientDestroy(DSTcpClient* ets);
 #endif
