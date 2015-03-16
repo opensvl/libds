@@ -21,7 +21,7 @@
 
 #include "ds_utils.h"
 #include "ds_object.h"
-#include "ds_tcp_stream.h"
+#include "ds_tcp_client.h"
 
 #define DS_MHB_HEADER_MAX_LEN   256
 

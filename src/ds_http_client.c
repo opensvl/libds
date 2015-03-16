@@ -393,7 +393,7 @@ ERR_DESTOY_MC:
     DSMhbClientDestroy(shc->mCli);
 ERR_DESTOY_TCP_STRM:
     LDS_DBG_N();
-    DSTcpStreamDestroy((DSTcpStream*)shc->strm);
+    DSTcpClientDestroy((DSTcpClient*)shc->strm);
 ERR_FREE_SHC:
     LDS_DBG_N();
     DSFree(shc);
@@ -520,7 +520,7 @@ int DSSimpleHttpClientRequest(const uint8_t ip[4], const uint16_t port, struct D
         LDS_ERR_OUT(ERR_OUT, "DSMalloc() failed\n");
     }
     
-    if (!(shc->strm = (DSStream*)DSTcpStreamNew(ip, port))) {
+    if (!(shc->strm = (DSStream*)DSTcpClientNew(NULL, 0, ip, port))) {
         LDS_ERR_OUT(ERR_FREE_SHC, "strm == NULL\n");
     }
     
@@ -553,7 +553,7 @@ ERR_DESTOY_RESP_BUFFER:
 ERR_DESTOY_MC:
     DSMhbClientDestroy(shc->mCli);
 ERR_DESTOY_TCP_STRM:
-    DSTcpStreamDestroy((DSTcpStream*)shc->strm);
+    DSTcpClientDestroy((DSTcpClient*)shc->strm);
 ERR_FREE_SHC:
     DSFree(shc);
 ERR_OUT:
