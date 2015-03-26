@@ -98,6 +98,7 @@ static err_t recv(void * arg, struct tcp_pcb * tpcb,
         cBuf.buf = p->payload;
         cBuf.size = p->tot_len;
         DSStreamCallCb((DSStream*)tc, DS_STREAM_CB_RECVED, &cBuf);
+        pbuf_free(p);
     } else {    /* remote closed connection */
         DSStreamCallCb((DSStream*)tc, DS_STREAM_CB_DISCONNECTED, NULL);
     }
