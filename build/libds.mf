@@ -52,15 +52,15 @@ ESP_SDK_DIR ?= ../../esp8266/sdk/esp_iot_sdk
 ESP_SDK_INC_DIR ?= $(ESP_SDK_DIR)/include
 ESP_SDK_LIB_DIR ?= $(ESP_SDK_DIR)/lib
 
-LWIP_DIR ?= $(ESP_SYS_DIR)/../esp8266-liblwip
+LWIP_DIR ?= $(ESP_SYS_DIR)/../esp-lwip/src
 ESP_LWIP_INC_DIR ?= $(LWIP_DIR)/include
 
 DS_CC ?= $(ESP_CROSS_COMPILE)gcc
 DS_AR ?= $(ESP_CROSS_COMPILE)ar
 DS_AR_FLAGS ?= cru
 
-DS_CFLAGS += -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH
-DS_CFLAGS += -I$(ESP_SYS_INC_DIR) -I$(ESP_SDK_INC_DIR) -I$(ESP_LWIP_INC_DIR)
+DS_CFLAGS += -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -DLWIP_OPEN_SRC -D__ets__ -DICACHE_FLASH
+DS_CFLAGS += -I$(ESP_SYS_INC_DIR) -I$(ESP_SDK_INC_DIR) -I$(ESP_LWIP_INC_DIR) -I$(LWIP_DIR)/include/ipv4 -I$(LWIP_DIR)/../config -I$(LWIP_DIR)/../espressif/include
 endif
 
 ifeq ($(DS_DEBUG),yes)

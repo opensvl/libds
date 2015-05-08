@@ -22,7 +22,8 @@
 #include "lds_log.h"
 #include "ds_dns.h"
 
-#include "lwip/ip.h"
+#include "lwip/udp.h"
+    
 
 
 static void found(const char *name, struct ip_addr *ipaddr, void *userData)

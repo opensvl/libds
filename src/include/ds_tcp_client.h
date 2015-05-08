@@ -19,6 +19,7 @@
 #ifndef _DS_TCP_CLIENT_
 #define _DS_TCP_CLIENT_
 #include "ds_stream.h"
+//#include "ds_tcp_client_.h"
 
 typedef struct _DSTcpClient DSTcpClient;
 
