@@ -82,7 +82,7 @@ static err_t recv(void * arg, struct tcp_pcb * tpcb,
                               struct pbuf * p, err_t err)
 {
     DSTcpClient *tc;
-    
+    struct pbuf *q;
     tc = arg;
     
     if (err != ERR_OK) {
@@ -93,11 +93,14 @@ static err_t recv(void * arg, struct tcp_pcb * tpcb,
     if (p) {    /* got data */
         struct DSConstBuf cBuf;
         
+        q = p;
+        while (q) {
+            cBuf.buf = q->payload;
+            cBuf.size = q->len;
+            DSStreamCallCb((DSStream*)tc, DS_STREAM_CB_RECVED, &cBuf);
+            q = q->next;
+        }
         tcp_recved(tc->pcb, p->tot_len);
-        
-        cBuf.buf = p->payload;
-        cBuf.size = p->tot_len;
-        DSStreamCallCb((DSStream*)tc, DS_STREAM_CB_RECVED, &cBuf);
         pbuf_free(p);
     } else {    /* remote closed connection */
         DSStreamCallCb((DSStream*)tc, DS_STREAM_CB_DISCONNECTED, NULL);
